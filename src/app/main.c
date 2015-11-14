@@ -27,7 +27,7 @@ int main(void)
 
   //memoryReadWord((uint32_t)&ITM->PORT[0].u32, &readData);
 
-0  Tlv_Session *session = tlvCreateSession();
+  Tlv_Session *session = tlvCreateSession();
 
   while(1)
   {

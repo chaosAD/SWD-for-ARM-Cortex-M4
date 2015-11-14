@@ -3,9 +3,6 @@ build/*
 Host/build/*
 !Host/build/README.txt
 SerialWireDebug/*
-*.cogui
-*.comarker
-*.comemgui
 FlashProgrammer/FlashProgrammer/*
 FlashProgrammer/*.comarker
 FlashProgrammer/*.comemgui
@@ -13,7 +10,6 @@ FlashProgrammer/*.cogui
 *.comarker
 *.comemgui
 *.cogui
-/output/
 debug.log
 mkmf.log
 arm-gcc-link.ld

@@ -23,7 +23,6 @@ int initFlag = 0;
 
 void setUp(void) {
   if(initFlag == 0) {
-     system("rake target:release[FlashProgrammer/FlashProgrammer.coproj]");
     initFlag = 1;
     initMemoryReadWrite();
     /* Erase flash space according to size */

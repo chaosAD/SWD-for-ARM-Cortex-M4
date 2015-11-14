@@ -1,9 +1,9 @@
 require 'mkmf'
-# Load cbuild script to help build C program
+# Load cbuild script to help build C program and target's flash-programmer
 load "scripts/cbuild.rb"
 
-FLASHER = trim_string((flasher = ENV['flasher']) ? String.new(flasher):"ST-LINK_CLI") unless defined? FLASHER
-ELF_TO_HEX = trim_string((elf_to_hex = ENV['elf_to_hex']) ? String.new(elf_to_hex):"arm-none-eabi-objcopy") unless defined? ELF_TO_HEX
+FLASHER = get_value_from_env("flasher", "ST-LINK_CLI") unless defined? FLASHER
+ELF_TO_HEX = get_value_from_env("elf_to_hex", "arm-none-eabi-objcopy") unless defined? ELF_TO_HEX
 C_EXCEPTION_PATH = "vendor/ceedling/vendor/c_exception/lib " unless defined? C_EXCEPTION_PATH
 
 # ST-LINK_CLI error code. They can be found in [1].
@@ -17,46 +17,46 @@ ERR_ST_LINK_BREAKPOINT = 10
 ERR_ST_LINK_ERASE_FLASH = 11
 ERR_ST_LINK_PROG_VERIFY = 12
 
-# Configuration parameters
-config = {
-  :verbose      => :no,
-  :compiler     => 'arm-none-eabi-gcc',
-  :linker       => 'arm-none-eabi-gcc',
-# -IC:\Users\user26\CoIDE\workspace\RTOS
-  :include_path => [C_EXCEPTION_PATH,
-                    'src/app/Drivers',
-                    'src/app/Stub',
-                    'src/app/Tlv',
-                    'src/app/SystemConfig',
-                    'src/app/PlatformSpecific',
-                    'src/app'],
-  :user_define  => ['STM32F429ZI', 'STM32F429xx'],
-  :library_path => '.',
-#  :library => ['libusb'],
-  :linker_script => 'STM32F429ZI_FLASH.ld',
-  :compiler_options => ['-mcpu=cortex-m4 -mthumb -g2 -Wall -O0 -g'],          # Other compiler options
-  :linker_options => ['-mcpu=cortex-m4 -mthumb -g2 -O0 -Wl,--gc-sections'],   # Other linker options
-  :option_keys  => {:library => '-l',
-                    :library_path => '-L',
-                    :include_path => '-I',
-                    :output_file => '-o',
-                    :compile => '-c',
-                    :linker_script => '-Wl,-T',
-                    :define => '-D'}
-}
-
 namespace :probe do
-  OUTPUT_PATH = 'build/release/probe/' unless defined? OUTPUT_PATH
+  # Configuration parameters
+  config = {
+    :verbose      => :no,
+    :compiler     => 'arm-none-eabi-gcc',
+    :linker       => 'arm-none-eabi-gcc',
+  # -IC:\Users\user26\CoIDE\workspace\RTOS
+    :include_path => [C_EXCEPTION_PATH,
+                      'src/app/Drivers',
+                      'src/app/Stub',
+                      'src/app/Tlv',
+                      'src/app/SystemConfig',
+                      'src/app/PlatformSpecific',
+                      'src/app'],
+    :user_define  => ['STM32F429ZI', 'STM32F429xx'],
+    :library_path => '.',
+  #  :library => ['libusb'],
+    :linker_script => 'STM32F429ZI_FLASH.ld',
+    :compiler_options => ['-mcpu=cortex-m4 -mthumb -g2 -Wall -O0 -g'],          # Other compiler options
+    :linker_options => ['-mcpu=cortex-m4 -mthumb -g2 -O0 -Wl,--gc-sections'],   # Other linker options
+    :option_keys  => {:library => '-l',
+                      :library_path => '-L',
+                      :include_path => '-I',
+                      :output_file => '-o',
+                      :compile => '-c',
+                      :linker_script => '-Wl,-T',
+                      :define => '-D'}
+  }
+
+  output_path = 'build/release/probe/'
   ouput_elf = nil
   ouput_hex = nil
   task :prepare_release, [:coproj] do |t, args|
     filenames, coproj = get_all_source_files_in_coproj(args[:coproj])
     puts "Building sources in #{coproj}..."
     file = File.basename(coproj, '.*')
-    ouput_elf = File.join(OUTPUT_PATH, file + '.elf')
-    ouput_hex = File.join(OUTPUT_PATH, file + '.hex')
+    ouput_elf = File.join(output_path, file + '.elf')
+    ouput_hex = File.join(output_path, file + '.hex')
     dep_list = createCompilationDependencyList(filenames, ['c', '.c++', '.s', 'cpp', 'asm'], '.', '.o')
-    dep_list = compile_list(dep_list, '.', OUTPUT_PATH, '.', config)
+    dep_list = compile_list(dep_list, '.', output_path, '.', config)
   #  p dep_list
     link_all(getDependers(dep_list), ouput_elf, config)
 
@@ -98,32 +98,4 @@ namespace :probe do
   task :full_erase do
     sys_cli "#{FLASHER} -ME"
   end  
-  
-  desc "Just duplicating .gitignore"
-  task :ignore do
-    src = ".gitignore"
-    target = ".gitignoreXXX"
-    if !up_to_date?(target, src)
-      p "duplicating .gitignore"
-      sh "cp #{src} #{target}"
-    else
-      p "already have the latest copy..."
-    end
-  end
-end
-
-namespace :probe do
-  namespace :"hw:test" do
-    filenames = get_all_tests("test/Hardware/**/test_*.c")
-    desc 'Run all hardware-in-the-loop tests'
-    task :all => (['probe:flash'] + filenames)
-  end
-end
-
-namespace :probe do
-  namespace :test do
-    filenames = get_all_tests("test/Probe/**/test_*.c")
-    desc 'Run all probe tests'
-    task :all => filenames
-  end
 end

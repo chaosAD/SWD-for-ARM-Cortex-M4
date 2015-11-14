@@ -1,44 +1,41 @@
-#FLASHER = "\"/C/Program Files (x86)/STMicroelectronics/STM32 ST-LINK Utility/ST-LINK Utility/ST-LINK_CLI\" "
-FLASHER = "ST-LINK_CLI " unless defined? FLASHER
-
 # Load build script to help build C program
 load "scripts/cbuild.rb"
 
-FLASHER = trim_string((flasher = ENV['flasher']) ? String.new(flasher):"ST-LINK_CLI") unless defined? FLASHER
-ELF_TO_HEX = trim_string((elf_to_hex = ENV['elf_to_hex']) ? String.new(elf_to_hex):"arm-none-eabi-objcopy") unless defined? ELF_TO_HEX
+FLASHER = get_value_from_env("flasher", "ST-LINK_CLI") unless defined? FLASHER
+ELF_TO_HEX = get_value_from_env("elf_to_hex", "arm-none-eabi-objcopy") unless defined? ELF_TO_HEX
 C_EXCEPTION_PATH = "vendor/ceedling/vendor/c_exception/lib " unless defined? C_EXCEPTION_PATH
 TARGET_OUTPUT_PATH = 'build/release/target/' unless defined? TARGET_OUTPUT_PATH
 
-# Configuration parameters
-config = {
-  :verbose      => :no,
-  :compiler     => 'arm-none-eabi-gcc',
-  :linker       => 'arm-none-eabi-gcc',
-# -IC:\Users\user26\CoIDE\workspace\RTOS
-  :include_path => ['src/app/Stub', 'src/app/SystemConfig',
-                    'FlashProgrammer/app/Drivers',
-                    'FlashProgrammer/app/Legacy',
-                    'FlashProgrammer/app'],
-  :user_define  => ['STM32F429ZI', 'STM32F429xx'],
-  :library_path => '.',
-#  :library => ['libusb'],
-  :linker_script => 'FlashProgrammer/ToRam.ld',
-  :compiler_options => ['-mcpu=cortex-m4 -mthumb -g2 -Wall -O0 -g'],          # Other compiler options
-  :linker_options => ['-mcpu=cortex-m4 -mthumb -g2 -O0 -Wl,--gc-sections'],   # Other linker options
-  :option_keys  => {:library => '-l',
-                    :library_path => '-L',
-                    :include_path => '-I',
-                    :output_file => '-o',
-                    :compile => '-c',
-                    :linker_script => '-Wl,-T',
-                    :define => '-D'}
-}
-
 namespace :target do
+  # Configuration parameters
+  config = {
+    :verbose      => :no,
+    :compiler     => 'arm-none-eabi-gcc',
+    :linker       => 'arm-none-eabi-gcc',
+  # -IC:\Users\user26\CoIDE\workspace\RTOS
+    :include_path => ['src/app/Stub', 'src/app/SystemConfig',
+                      'FlashProgrammer/app/Drivers',
+                      'FlashProgrammer/app/Legacy',
+                      'FlashProgrammer/app'],
+    :user_define  => ['STM32F429ZI', 'STM32F429xx'],
+    :library_path => '.',
+  #  :library => ['libusb'],
+    :linker_script => 'FlashProgrammer/ToRam.ld',
+    :compiler_options => ['-mcpu=cortex-m4 -mthumb -g2 -Wall -O0 -g'],          # Other compiler options
+    :linker_options => ['-mcpu=cortex-m4 -mthumb -g2 -O0 -Wl,--gc-sections'],   # Other linker options
+    :option_keys  => {:library => '-l',
+                      :library_path => '-L',
+                      :include_path => '-I',
+                      :output_file => '-o',
+                      :compile => '-c',
+                      :linker_script => '-Wl,-T',
+                      :define => '-D'}
+  }
   ouput_elf = nil
   ouput_hex = nil
   task :prepare_release, [:coproj] do |t, args|
-    filenames, coproj = get_all_source_files_in_coproj(args[:coproj])
+    filenames, coproj = get_all_source_files_in_coproj(args[:coproj], "./FlashProgrammer")
+    puts "Building sources in #{coproj}..."
     file = File.basename(coproj, '.coproj')
     ouput_elf = File.join(TARGET_OUTPUT_PATH, file + '.elf')
     ouput_hex = File.join(TARGET_OUTPUT_PATH, file + '.hex')

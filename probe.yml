@@ -12,7 +12,7 @@
   :build_root: build
   :release_build: TRUE
   :test_file_prefix: test_
-  :load_scripts: [scripts/probe.rb, scripts/target.rb]
+  :load_scripts: [scripts/probe_test.rb]
 
 :release_build:
   :output: main.exe

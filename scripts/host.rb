@@ -81,8 +81,9 @@ config = {
 }
 
 namespace :host do
-  desc 'Build brute release code'
+  desc 'Build CLI for probe'
   task :release do
+    puts "Creating CLI program for ARM probe..."
     dep_list = compile_list(exception_dependency, CEXCEPTION_PATH, 'build/release/host/c', '.', config)
     dep_list.merge!(compile_all(['src/app/Tlv',                 # directory of dependee
                                  'src/Host/ElfReader', 
